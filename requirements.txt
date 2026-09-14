@@ -1,0 +1,9 @@
+# Core: everything except the two tracing scripts runs on these alone.
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+
+# Ray tracing. Only needed by scripts/01_trace_map.py and
+# scripts/02_ray_convergence.py. Developed against Sionna RT 2.0.1.
+# Uncomment, or: pip install "sionna>=1.0"
+# sionna>=1.0

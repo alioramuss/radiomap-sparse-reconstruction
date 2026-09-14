@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "radiomap-sparse-reconstruction"
+version = "1.0.0"
+description = "Sparse radio map reconstruction baselines on a Sionna RT street canyon"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ali Tagiyev" }]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+raytracing = ["sionna>=1.0"]
+
+[tool.setuptools]
+packages = ["radiomap"]
