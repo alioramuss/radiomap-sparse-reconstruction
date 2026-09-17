@@ -193,7 +193,13 @@ def building_mask_from_scene(scene, cell_centres: np.ndarray) -> np.ndarray:
     direction = mi.Vector3f(0.0, 0.0, 1.0)
     ray = mi.Ray3f(o=origin, d=direction)
     si = mi_scene.ray_intersect(ray)
-    hit = np.asarray(dr.numpy(si.is_valid()), dtype=bool)
+    # drjit dropped the module-level dr.numpy() helper in 1.3; drjit arrays
+    # support the numpy array protocol directly.  Try both so the mask works
+    # on old and new installs alike.
+    is_valid = si.is_valid()
+    hit = np.asarray(
+        dr.numpy(is_valid) if hasattr(dr, "numpy") else is_valid, dtype=bool
+    )
     return hit.reshape(ny, nx)
 
 
