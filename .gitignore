@@ -11,3 +11,9 @@ dist/
 data/*.npz
 results/*.csv
 figures/*.png
+
+# Multiband cache, derived tables and run logs: reproducible, not source.
+data/**/*.npz
+results/*.json
+results/*.md
+logs/
