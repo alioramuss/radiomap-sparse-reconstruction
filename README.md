@@ -11,7 +11,7 @@ below.
 
 ---
 
-## The three findings
+## The four findings
 
 **1. The ground truth is noisier than the thing being measured**, at the ray
 counts published work uses. At 2×10⁵ rays — the count used by the closest
@@ -29,6 +29,12 @@ curve is flat from 5% onward.
 **3. Where the gap is matters more than which interpolator fills it.** Under
 hold-out the standard deviation across block positions (1.5–8.5 dB) is larger
 than the gaps between methods, so most of the method ranking is not resolved.
+
+**4. The ray budget does not move with frequency.** Added after the interim:
+converging the ground truth costs the same at 3.5, 28 and 39 GHz to within 3%,
+because the variance in a cell is set by how many ray tubes land in it and that
+is geometry. The map itself does get harder edged, from 17.6 dB of spread to
+21.8 dB, which is a prediction about reconstruction rather than about cost.
 
 ---
 
@@ -59,6 +65,45 @@ smallest reconstruction error below.
 A second, independent check agrees: the fitted variogram has a nugget of
 essentially zero. Independent per-cell noise would appear as variance that does
 not vanish at zero lag.
+
+### The same convergence at 28 and 39 GHz
+
+The table above was measured at 3.5 GHz and the rest of this study then assumed
+2×10⁸ would carry over to the millimetre bands. That assumption is now measured
+rather than assumed, and it holds: **the ray count requirement is the same in
+all three bands to within 3%.** Run-to-run RMSE in dB, three independent runs at
+each point, grid held fixed in metres:
+
+| Rays per tx | 3.5 GHz | 28 GHz | 39 GHz | Street cells with no ray |
+|---|---|---|---|---|
+| 5×10⁶ | 2.50 | 2.56 | 2.60 | 1.0% |
+| 2×10⁷ | 1.17 | 1.22 | 1.22 | 0.20% |
+| 5×10⁷ | 0.67 | 0.69 | 0.69 | 0.18% |
+| 1×10⁸ | 0.46 | 0.47 | 0.47 | 0.18% |
+| **2×10⁸** | **0.32** | **0.32** | **0.32** | **0.18%** |
+| 5×10⁸ | 0.20 | 0.20 | 0.20 | 0.18% |
+
+Read off each band's fit, 0.25 dB costs 1.69×10⁸, 1.74×10⁸ and 1.74×10⁸ rays.
+The spread runs very slightly the wrong way: the millimetre bands want
+marginally *more*, not less.
+
+The reason is that the variance in a cell is set by how many ray tubes land in
+it, which is geometry. Frequency changes what each contribution is worth in dB,
+not how many arrive. Checked directly rather than inferred: two runs at
+different frequencies disagree about which cells received a ray no more than two
+runs at the *same* frequency do, and the empty-cell fraction matches across
+bands to 0.2 percentage points at every ray count.
+
+What does change is the map. Its spread goes from 17.6 dB at 3.5 GHz to 21.8 dB
+at 39 GHz and the dynamic range widens from 71 to 80 dB, as diffraction weakens
+and the canyon moves toward binary line of sight. So the reconstruction problem
+should get harder at millimetre wave even though the ray budget does not move.
+That is a prediction for the comparison stage, not a result.
+
+The grid is held fixed **in metres** across all three bands, deliberately.
+Fixing it in wavelengths would hold the cell constant in λ but change the cell
+count by more than a hundredfold between 3.5 and 39 GHz, and would be asking a
+different question. Metres is what a measurement campaign faces.
 
 ### Reconstruction error
 
@@ -120,7 +165,7 @@ amount of sampling elsewhere in the street recovers.
 |---|---|
 | scene | `simple_street_canyon` (Sionna built-in) |
 | solver | Sionna RT 2.0.1 |
-| carrier | 3.5 GHz |
+| carrier | 3.5 GHz (convergence also measured at 28 and 39 GHz) |
 | measurement plane | 1.5 m |
 | cell size | 1.0 m |
 | grid | 122 × 187 |
@@ -136,13 +181,21 @@ Of the 22,814 cells, 5,236 sit under building geometry and are excluded, found
 by casting a vertical ray from each cell centre. A handful more open-street
 cells are never reached by any ray.
 
-### Two things the Sionna docs do not say
+### Three things the Sionna docs do not say
 
 - `path_gain` is returned as a **linear** power ratio, not dB. Values on this
   scene are of order 10⁻⁹.
 - `refraction` defaults to **on**. Left on, rays leak into building interiors
   and those cells stop being structurally unreachable, which quietly changes
   what an accessibility mask means. It is switched off here on purpose.
+- **The solver does not reproduce a map from its seed.** On the LLVM backend,
+  eight runs at one seed and 5×10⁶ rays gave at least three distinct outcomes,
+  about 0.8 dB apart. It is intermittent and it shrinks fast: at 2×10⁷ no pair
+  of four runs differed at all, and at 5×10⁷ the spread is 0.088 dB against
+  0.662 dB of genuine sampling noise, so it is negligible at the operating
+  point. The convergence columns are therefore labelled run-to-run rather than
+  seed-to-seed, and a cached map cannot be regenerated bit-exactly.
+  `scripts/10_determinism.py` is that measurement.
 
 ---
 
@@ -175,6 +228,13 @@ python scripts/03_reconstruction_sweep.py --map data/map_3p5GHz.npz \
 python scripts/05_figures.py --map data/map_3p5GHz.npz \
     --sweep results/sweep.csv --outdir figures
 
+# 6. convergence at 3.5, 28 and 39 GHz        (needs Sionna, ~60 min on 2 cores)
+python scripts/06_multiband_convergence.py
+python scripts/07_multiband_analysis.py      # tables and fits
+python scripts/08_multiband_figure.py        # the three-band figure
+python scripts/09_multiband_checks.py        # 17 checks; 16 pass, see below
+python scripts/10_determinism.py             # the same-seed study
+
 # 5. dB vs linear ablation                    (no Sionna, minutes)
 python scripts/04_db_vs_linear.py --map data/map_3p5GHz.npz
 ```
@@ -196,7 +256,8 @@ to bottom on a free Colab CPU runtime.
 ## Tests
 
 ```bash
-python tests_pipeline.py      # 19/19 checks passed
+python tests_pipeline.py             # 19/19 checks passed
+python scripts/09_multiband_checks.py  # 16/17, one expected failure
 ```
 
 Nineteen known-answer checks, no pytest and no Sionna required. Each one
@@ -217,6 +278,14 @@ encodes a fact that has to be true for a number above to mean what it says:
 - the dB/linear conversion round-trips, a cell no ray reached is `nan` and not
   `-inf`, and the metrics are right (18)
 - building cells are excluded from the valid set (19)
+
+`scripts/09_multiband_checks.py` adds seventeen more for the multiband result:
+that the building mask and the reached-cell pattern do not move with frequency
+or seed, that the fitted exponent moves toward −1/2 on the fully covered points,
+that mean gain follows 20log₁₀(*f*), and that the per-band ray counts agree.
+Sixteen pass. The one that fails is the reproducibility check described above,
+left in deliberately as an expected failure rather than deleted, because a
+silenced check is worse than a failing one.
 
 ---
 
@@ -256,8 +325,12 @@ read as a general claim about interpolators.
   so spacing should track λ and density should go as *f*². At 28 and 39 GHz the
   canyon becomes near-binary line of sight and the map develops harder edges, so
   the smoothness assumption should break down faster than that law predicts.
-  The grid has to be fixed in wavelengths or in metres, deliberately and
-  stated, because the two give different questions.
+  *Half answered.* The ray budget needed to converge the ground truth turns out
+  not to move with frequency at all, and the grid is now fixed in metres and
+  said so; see the convergence section above. Whether the *reconstruction* error
+  scales that way is the open half, and is the next thing to run.
+- **Cross-frequency comparison against 3GPP 38.901 UMi**, at 3.5, 28 and 39 GHz,
+  suggested by Tianrun Qi. The convergence work above is its prerequisite.
 - **Does a building mask close the gap?** The missing information is geometric.
   Giving the interpolator the building footprints — free in a simulation, cheap
   in reality — is the smallest change that could test that diagnosis.
@@ -288,6 +361,11 @@ scripts/
   03_reconstruction_sweep.py  both designs, all methods, all fractions
   04_db_vs_linear.py        the dB vs linear power ablation
   05_figures.py             figures 2 and 3 from the report
+  06_multiband_convergence.py  the same sweep at 3.5, 28 and 39 GHz  (Sionna)
+  07_multiband_analysis.py     per-band tables and the N^alpha fits
+  08_multiband_figure.py       the three-band convergence figure
+  09_multiband_checks.py       17 known-answer checks on the above
+  10_determinism.py            how much of the spread is the seed  (Sionna)
 notebooks/          self-contained Colab notebook
 report/             the interim write-up sent to IDCoM, 13 September 2026
 tests_pipeline.py   19 known-answer checks
