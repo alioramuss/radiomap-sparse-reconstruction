@@ -102,6 +102,12 @@ def trace(cfg: SceneConfig | None = None, *, verbose: bool = True) -> RadioMapDa
     scene = load_scene(getattr(rt.scene, cfg.scene_name))
     scene.frequency = cfg.frequency_hz
 
+    if cfg.scattering_coefficient is not None:
+        # Applied to every material in the scene, deliberately and uniformly, so
+        # that S is one stated number rather than a per-surface fitting exercise.
+        for _obj in scene.objects.values():
+            _obj.radio_material.scattering_coefficient = cfg.scattering_coefficient
+
     scene.tx_array = PlanarArray(
         num_rows=1,
         num_cols=1,

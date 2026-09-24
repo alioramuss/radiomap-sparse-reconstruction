@@ -34,6 +34,13 @@ class SceneConfig:
     specular_reflection: bool = True
     diffraction: bool = True
     diffuse_reflection: bool = False
+    # Sionna ships every ITU material with a scattering coefficient of ZERO, so
+    # diffuse_reflection=True on its own changes nothing at all.  S has to be set
+    # explicitly, which makes it a modelling choice rather than a flag.  S is the
+    # fraction of the reflected FIELD that goes diffuse: the specular part is
+    # scaled by sqrt(1 - S^2), so raising S redistributes energy, it does not add
+    # energy.  None leaves the material defaults untouched.
+    scattering_coefficient: float | None = None
     # NOTE: Sionna's default is refraction=True.  Left on, rays leak into
     # building interiors, those cells stop being structurally unreachable, and
     # the accessibility mask quietly stops meaning what you think it means.
