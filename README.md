@@ -11,7 +11,7 @@ below.
 
 ---
 
-## The four findings
+## The five findings
 
 **1. The ground truth is noisier than the thing being measured**, at the ray
 counts published work uses. At 2×10⁵ rays — the count used by the closest
@@ -35,6 +35,14 @@ converging the ground truth costs the same at 3.5, 28 and 39 GHz to within 3%,
 because the variance in a cell is set by how many ray tubes land in it and that
 is geometry. The map itself does get harder edged, from 17.6 dB of spread to
 21.8 dB, which is a prediction about reconstruction rather than about cost.
+
+**5. Against 3GPP 38.901 UMi, line of sight agrees and non line of sight splits
+in two.** LOS cells sit on free space in all three bands and follow 20log₁₀(*f*)
+exactly, as the model assumes. NLOS cells do not follow the model's 21.3log₁₀(*f*).
+Most of them follow 30log₁₀(*f*), which is what a single diffracting edge gives,
+so the ray-traced NLOS street loses about 9 dB more than UMi predicts going from
+3.5 to 39 GHz. Tracing to depth 5 instead of 3 closes less than 1 dB of the gap,
+so it is not a truncation artefact.
 
 ---
 
@@ -104,6 +112,91 @@ The grid is held fixed **in metres** across all three bands, deliberately.
 Fixing it in wavelengths would hold the cell constant in λ but change the cell
 count by more than a hundredfold between 3.5 and 39 GHz, and would be asking a
 different question. Metres is what a measurement campaign faces.
+
+### Against 3GPP 38.901 UMi at 3.5, 28 and 39 GHz
+
+The comparison suggested by Tianrun Qi. Same scene, same 2×10⁸ rays, scattering
+off. Line of sight is decided geometrically, one shadow ray per cell to the
+transmitter, so the LOS/NLOS split is exact and does not depend on the seed.
+Cells closer than 10 m in 2D are dropped, as the model's validity range
+requires. That leaves 3,285 LOS and 14,060 NLOS cells.
+
+Residual is ray-traced path loss minus the model, so positive means the ray
+tracer loses more.
+
+| Band | Class | Bias | SD | RMSE | Within ±1σ of model | Fitted exponent (model) |
+|---|---|---|---|---|---|---|
+| 3.5 GHz | LOS | −2.69 | 1.04 | 2.88 | 88.8% (σ = 4) | 1.83 (2.10) |
+| 3.5 GHz | NLOS | +6.96 | 11.90 | 13.79 | 20.7% (σ = 7.82) | 6.53 (3.53) |
+| 28 GHz | LOS | −2.34 | 0.92 | 2.51 | 90.8% | 1.85 (2.10) |
+| 28 GHz | NLOS | +11.08 | 15.19 | 18.80 | 16.7% | 7.88 (3.53) |
+| 39 GHz | LOS | −2.33 | 0.93 | 2.51 | 90.9% | 1.85 (2.10) |
+| 39 GHz | NLOS | +11.78 | 15.77 | 19.68 | 17.2% | 8.08 (3.53) |
+
+If the model's own statistics held on this scene, 68% of cells would fall inside
+one shadow fading sigma. LOS does better than that. NLOS manages 17 to 21%.
+
+**The NLOS gap has two regimes, not one offset.** Within about 45 m of the
+transmitter the ray tracer loses up to 10 dB *less* than UMi, because those NLOS
+cells are lit by reflections off the canyon walls. Beyond 80 m it loses 13 to
+25 dB *more*, and the excess is larger at 28 and 39 GHz than at 3.5 GHz. The
+fitted NLOS "exponent" of 6.5 to 8 is a symptom of those two regimes being
+forced through one line, not a path loss exponent anyone should use.
+
+**How path loss scales with frequency, cell by cell.** Regressing each cell's
+path loss on 10log₁₀(*f*) across the three bands gives one number per cell. Free
+space is 2.0. The UMi NLOS formula is 2.13.
+
+| | Median | 10th to 90th percentile | 3.5 to 28 GHz | 28 to 39 GHz |
+|---|---|---|---|---|
+| LOS | 2.03 | 2.00 to 2.07 | 2.03 | 2.00 |
+| NLOS | 2.99 | 1.76 to 3.00 | 2.99 | 3.00 |
+
+57% of NLOS cells sit within 0.1 of 3.0, and the share climbs with distance:
+20% within 40 m, 50% at 40 to 80 m, 81% beyond 80 m. A single diffracting edge
+adds 10 dB per decade on top of free space, because the UTD diffraction
+coefficient falls as 1/√*k*, so 3.0 is the signature of cells whose power comes
+from one edge. About 20% of NLOS cells scale at 2.1 or below, which is the
+reflection-lit set. Their small departures from 2.0 are presumably the ITU
+material parameters changing with frequency. Integrated over 3.5 to 39 GHz, the diffraction-dominated cells lose
+about 9 dB more than the model's 2.13 would predict.
+
+**Is it max depth?** Tracing at depth 5 instead of 3, same rays and seed
+(`scripts/17_depth_check.py`):
+
+| Band | NLOS bias, depth 3 | depth 5 | Beyond 80 m, depth 3 | depth 5 | Power added, median / 90th pct |
+|---|---|---|---|---|---|
+| 3.5 GHz | +6.96 | +6.80 | +12.09 | +11.91 | 0.00 / 0.39 dB |
+| 28 GHz | +11.08 | +10.26 | +18.56 | +17.40 | 0.00 / 2.57 dB |
+
+No cell is reached at depth 5 that was not reached at depth 3, and the median
+cell gains nothing. The gap is not a truncation artefact. With specular
+reflection and one diffraction per path, nothing else can carry energy into the
+deep shadow, and diffraction gets weaker as frequency rises.
+
+**Why this links to diffuse scattering.** A measured channel has other
+mechanisms filling that shadow, and diffuse scattering is the obvious candidate
+the simulation leaves out. The roughness argument in the scattering study says
+the scattering coefficient should *rise* with frequency. If it does, scattering
+is exactly what would pull the NLOS frequency coefficient back from 3.0 toward
+the measured 2.13. That is a hypothesis, and testing it needs a
+frequency-dependent S from a representative surface roughness.
+
+**Predicting one band from another.** Taking the 3.5 GHz map and adding
+20log₁₀(*f*/3.5) predicts the LOS cells at 28 and 39 GHz to 0.43 dB RMSE,
+against 2.5 dB for UMi. For NLOS it gives 7.4 and 8.4 dB, still less than half
+of UMi's 18.8 and 19.7 dB. No single frequency coefficient works for all NLOS
+cells: 2.5 minimises the RMSE (5.2 dB at 28 GHz), while 3.0 puts the median cell
+within 0.13 dB and leaves the reflection-lit cells 11 dB out. So a
+cross-frequency predictor mostly has to know which regime each cell is in, and
+that is a fact about geometry.
+
+**Caveats.** UMi is fitted for a 10 m base station and this transmitter sits on
+a 32 m rooftop. Run against UMa (25 m nominal) instead, LOS agrees to within
+0.3 dB in every band, and NLOS gets worse, with a bias of +9.4 to +15.6 dB. One
+scene, one transmitter, no diffuse scattering, and 38.901 is an average over
+many measured environments, so no single scene should be expected to sit on it.
+`results/umi_comparison.csv` has both models in full.
 
 ### Reconstruction error
 
@@ -235,6 +328,14 @@ python scripts/08_multiband_figure.py        # the three-band figure
 python scripts/09_multiband_checks.py        # 17 checks; 16 pass, see below
 python scripts/10_determinism.py             # the same-seed study
 
+# 7. against 3GPP 38.901 UMi                  (tracing needs Sionna, ~2 min)
+python scripts/13_trace_bands_los.py         # three bands + LOS mask
+python scripts/14_umi_comparison.py          # tables, results/umi_comparison.csv
+python scripts/15_umi_figure.py              # figures/umi_comparison.png
+python scripts/16_umi_checks.py              # 15 checks, all pass
+python scripts/13_trace_bands_los.py --out data/bands_los_depth5.npz --max-depth 5 --bands 3.5,28
+python scripts/17_depth_check.py
+
 # 5. dB vs linear ablation                    (no Sionna, minutes)
 python scripts/04_db_vs_linear.py --map data/map_3p5GHz.npz
 ```
@@ -329,8 +430,10 @@ read as a general claim about interpolators.
   not to move with frequency at all, and the grid is now fixed in metres and
   said so; see the convergence section above. Whether the *reconstruction* error
   scales that way is the open half, and is the next thing to run.
-- **Cross-frequency comparison against 3GPP 38.901 UMi**, at 3.5, 28 and 39 GHz,
-  suggested by Tianrun Qi. The convergence work above is its prerequisite.
+- **Cross-frequency comparison against 3GPP 38.901 UMi.** *Done*, see above.
+  The open question it leaves is whether diffuse scattering with a
+  frequency-dependent S closes the far NLOS gap and moves the NLOS frequency
+  coefficient from 3.0 toward 2.13.
 - **Does a building mask close the gap?** The missing information is geometric.
   Giving the interpolator the building footprints — free in a simulation, cheap
   in reality — is the smallest change that could test that diagnosis.
@@ -348,6 +451,7 @@ read as a general claim about interpolators.
 radiomap/
   config.py         every number from the report, in one place
   scene.py          Sionna RT tracing, building mask, synthetic stand-in
+  threegpp.py       38.901 UMi and UMa path loss, Table 7.4.1-1
   sampling.py       random and contiguous hold-out designs
   interpolators.py  NN, IDW, thin-plate RBF, ordinary and detrended kriging
   variogram.py      empirical variogram + spherical model fit
@@ -366,6 +470,11 @@ scripts/
   08_multiband_figure.py       the three-band convergence figure
   09_multiband_checks.py       17 known-answer checks on the above
   10_determinism.py            how much of the spread is the seed  (Sionna)
+  13_trace_bands_los.py        three bands plus a geometric LOS mask  (Sionna)
+  14_umi_comparison.py         against 38.901 UMi and UMa, per band and class
+  15_umi_figure.py             the four-panel comparison figure
+  16_umi_checks.py             15 known-answer checks on the formulas and data
+  17_depth_check.py            depth 3 against depth 5
 notebooks/          self-contained Colab notebook
 report/             the interim write-up sent to IDCoM, 13 September 2026
 tests_pipeline.py   19 known-answer checks
