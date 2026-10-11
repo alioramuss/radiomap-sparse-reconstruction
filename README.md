@@ -198,6 +198,40 @@ scene, one transmitter, no diffuse scattering, and 38.901 is an average over
 many measured environments, so no single scene should be expected to sit on it.
 `results/umi_comparison.csv` has both models in full.
 
+### Roughness-driven diffuse scattering against UMi
+
+The hypothesis above, tested. The scattering coefficient S is set per band from
+a surface roughness through the Rayleigh criterion and the Ament factor, at
+normal incidence, and the UMi comparison is rerun cell for cell. The
+scattering-on estimator is heavy tailed, so each map is the per-cell median of
+three independent runs at 1e8 rays and every number is a median or a share of
+cells (`scripts/18_roughness_sweep.py`, `19_roughness_analysis.py`,
+`20_roughness_figure.py`; 10 known-answer checks, all pass, including that the
+scattering-off column reproduces the table above to 0.01 dB).
+
+| Roughness | S at 3.5 / 28 / 39 GHz | NLOS mean bias vs UMi, 3.5 / 28 / 39 GHz | NLOS within UMi ±1σ, 28 / 39 GHz | NLOS frequency coefficient, median |
+|---|---|---|---|---|
+| off | 0 / 0 / 0 | +7.0 / +11.1 / +11.8 dB | 17% / 17% | 2.99 |
+| 0.2 mm | 0.03 / 0.23 / 0.32 | +7.0 / +8.3 / +7.1 dB | 22% / 29% | 2.27 |
+| 0.5 mm | 0.07 / 0.54 / 0.70 | +6.9 / +4.0 / +2.7 dB | 48% / 55% | 1.86 |
+| 1.0 mm | 0.15 / 0.87 / 0.97 | +6.5 / +2.0 / +2.0 dB | 61% / 65% | 1.76 |
+| 2.0 mm | 0.29 / 1.00 / 1.00 | +5.2 / +2.1 / +2.1 dB | 67% / 66% | 1.85 |
+
+At 3.5 GHz the implied S stays below 0.3 and the median far NLOS cell moves by
+less than 0.1 dB. At 28 and 39 GHz, from 0.5 mm up, diffuse paths add 6 to 11 dB to the
+median far NLOS cell, and the share of NLOS cells inside UMi's own one-sigma band
+approaches the 68% the model implies. The NLOS frequency coefficient falls from
+the single-edge 3.0 to 2.27 at 0.2 mm, close to UMi's 2.13, and overshoots below
+free space from 0.5 mm because S itself rises with frequency.
+
+**Caveats.** The far-zone magnitudes are not converged: with scattering on at
+28 and 39 GHz two runs differ there by a median 3.4 to 3.9 dB, and the median far
+cell still rises by 2 to 3.4 dB between 2e7 and 1e8 rays, so the scattering
+contribution is if anything understated. Normal incidence gives the largest S a
+roughness can imply; canyon walls are mostly hit obliquely, which would lower
+it. One S on every surface including the ground, Sionna's default Lambertian
+pattern, one scene, one transmitter.
+
 ### Reconstruction error
 
 RMSE in dB, mean ± standard deviation. Random: 5 seeds. Block: 6 block
@@ -335,6 +369,11 @@ python scripts/15_umi_figure.py              # figures/umi_comparison.png
 python scripts/16_umi_checks.py              # 15 checks, all pass
 python scripts/13_trace_bands_los.py --out data/bands_los_depth5.npz --max-depth 5 --bands 3.5,28
 python scripts/17_depth_check.py
+
+# 8. roughness-driven scattering against UMi   (needs Sionna, ~50 min on 2 cores)
+python scripts/18_roughness_sweep.py         # 60 traces, cached in data/roughness
+python scripts/19_roughness_analysis.py      # tables + 10 checks, all pass
+python scripts/20_roughness_figure.py        # figures/fig_roughness.png
 
 # 5. dB vs linear ablation                    (no Sionna, minutes)
 python scripts/04_db_vs_linear.py --map data/map_3p5GHz.npz
