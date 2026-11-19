@@ -1,0 +1,249 @@
+% Starter bibliography.
+%
+% Every entry below was checked against a publisher or aggregator record, not
+% by reading the paper. Verify anything you lean on hard, and read at least the
+% abstracts before citing, because a citation you cannot characterise in a
+% sentence is a liability in review.
+%
+% Working notes sit in %-comments above each entry, NOT in a note field,
+% because IEEEtran.bst typesets note fields into the printed reference list.
+% Keep it that way.
+%
+% One item is still unconfirmed: the END page of the Ament 1953 entry.
+
+% ---------------------------------------------------------------------------
+% The simulator
+% ---------------------------------------------------------------------------
+
+% NOTE: Cite in Section II when introducing the solver.
+@article{hoydis2023sionnart,
+  author  = {Hoydis, Jakob and A{\"i}t Aoudia, Fay{\c{c}}al and Cammerer, Sebastian
+             and Nimier-David, Merlin and Binder, Nikolaus and Marcus, Guillermo
+             and Keller, Alexander},
+  title   = {{Sionna RT}: Differentiable Ray Tracing for Radio Propagation Modeling},
+  journal = {arXiv preprint arXiv:2303.11103},
+  year    = {2023}
+}
+
+% ---------------------------------------------------------------------------
+% The reference model and the measurements behind it
+% ---------------------------------------------------------------------------
+
+% NOTE: CHECK THE VERSION. Cite whichever release your implementation of
+%  the UMi formulas follows. V18.0.0 (2024-05) and V19.3.0 (2026-03) both
+%  exist. Central citation for Sections III to V.
+@techreport{3gpp38901,
+  author      = {{3GPP}},
+  title       = {Study on channel model for frequencies from 0.5 to 100 {GHz}},
+  institution = {3rd Generation Partnership Project},
+  type        = {Technical Report},
+  number      = {TR 38.901},
+  year        = {2024}
+}
+
+% NOTE: The 28 and 38 GHz measurement campaigns the UMi parameters rest
+%  on. Cite in the introduction and when saying 38.901 is an average over
+%  measured environments.
+@article{rappaport2013mmwave,
+  author  = {Rappaport, Theodore S. and Sun, Shu and Mayzus, Rimma and Zhao, Hang
+             and Azar, Yaniv and Wang, Kevin and Wong, George N. and Schulz, Jocelyn K.
+             and Samimi, Mathew and Gutierrez, Felix},
+  title   = {Millimeter Wave Mobile Communications for {5G} Cellular: It Will Work!},
+  journal = {IEEE Access},
+  volume  = {1},
+  pages   = {335--349},
+  year    = {2013}
+}
+
+% NOTE: Close-in and floating-intercept fits at exactly your two
+%  millimetre bands. Suggested by Prof Thompson. Note it describes a rich
+%  scattering environment at BOTH 28 and 38 GHz and draws no comparison
+%  between them.
+@article{sulyman2014pathloss,
+  author  = {Sulyman, Ahmed Iyanda and Nassar, AlMuthanna T. and Samimi, Mathew K.
+             and MacCartney, George R. and Rappaport, Theodore S. and Alsanie, Abdulhameed},
+  title   = {Radio Propagation Path Loss Models for {5G} Cellular Networks in the
+             28 {GHz} and 38 {GHz} Millimeter-Wave Bands},
+  journal = {IEEE Communications Magazine},
+  volume  = {52},
+  number  = {9},
+  pages   = {78--86},
+  year    = {2014}
+}
+
+% ---------------------------------------------------------------------------
+% Diffraction: the mechanism behind the 30 log10 f result
+% ---------------------------------------------------------------------------
+
+% NOTE: The 1/sqrt(k) dependence of the diffraction coefficient. This is
+%  the citation Section IV rests on, so read enough of it to state the
+%  dependence correctly in your own words.
+@article{kouyoumjian1974utd,
+  author  = {Kouyoumjian, Robert G. and Pathak, Prabhakar H.},
+  title   = {A Uniform Geometrical Theory of Diffraction for an Edge in a
+             Perfectly Conducting Surface},
+  journal = {Proceedings of the IEEE},
+  volume  = {62},
+  number  = {11},
+  pages   = {1448--1461},
+  year    = {1974}
+}
+
+% ---------------------------------------------------------------------------
+% Diffuse scattering: the mechanism that closes the gap
+% ---------------------------------------------------------------------------
+
+@article{degliesposti2001diffuse,
+  author  = {Degli-Esposti, Vittorio},
+  title   = {A Diffuse Scattering Model for Urban Propagation Prediction},
+  journal = {IEEE Transactions on Antennas and Propagation},
+  volume  = {49},
+  number  = {7},
+  pages   = {1111--1113},
+  year    = {2001}
+}
+
+% NOTE: The effective roughness formulation. This is the standard way the
+%  field parameterises diffuse scattering, and it is the obvious
+%  alternative to the Rayleigh/Ament route you took. Section V should say
+%  why you chose roughness-derived S over a fitted S.
+@article{degliesposti2004advanced,
+  author  = {Degli-Esposti, Vittorio and Guiducci, Doriana and de'Marsi, Annalisa
+             and Azzi, Paolo and Fuschini, Franco},
+  title   = {An Advanced Field Prediction Model Including Diffuse Scattering},
+  journal = {IEEE Transactions on Antennas and Propagation},
+  volume  = {52},
+  number  = {7},
+  pages   = {1717--1728},
+  year    = {2004}
+}
+
+% NOTE: Measured scattering coefficients for real building surfaces. Use
+%  it to say whether your swept range of S is physically plausible, which
+%  is a question a reviewer will ask.
+@article{degliesposti2007measurement,
+  author  = {Degli-Esposti, Vittorio and Fuschini, Franco and Vitucci, Enrico M.
+             and Falciasecca, Gabriele},
+  title   = {Measurement and Modelling of Scattering From Buildings},
+  journal = {IEEE Transactions on Antennas and Propagation},
+  volume  = {55},
+  number  = {1},
+  pages   = {143--153},
+  year    = {2007}
+}
+
+% NOTE: Volume 41, issue 1 and start page 142 confirmed against an
+%  independent reference list (DTIC ADA134774). The END page is still
+%  unconfirmed, so 146 is a guess: check it on IEEE Xplore (document
+%  4051171) before submitting, since Equation (1) in Section V is
+%  attributed to this paper.
+@article{ament1953rough,
+  author  = {Ament, W. S.},
+  title   = {Toward a Theory of Reflection by a Rough Surface},
+  journal = {Proceedings of the IRE},
+  volume  = {41},
+  number  = {1},
+  pages   = {142--146},
+  year    = {1953}
+}
+
+% ---------------------------------------------------------------------------
+% Ray tracing as ground truth
+% ---------------------------------------------------------------------------
+
+% NOTE: AUTHOR LIST INCOMPLETE, the source truncated it. Useful because it
+%  is a recent, careful calibration of a ray tracer against measurement,
+%  so it supports the premise that ray tracers are being used as ground
+%  truth and that their agreement with measurement is an open question.
+@article{ying2026nyuray,
+  author  = {Ying, Mingjun and Shakya, Dipankar and Ma, Peijie and Qian, Guanbo
+             and Rappaport, Theodore S.},
+  title   = {Site-Specific Location Calibration and Validation of Ray-Tracing
+             Simulator {NYURay} at Upper Mid-Band Frequencies},
+  journal = {npj Wireless Technology},
+  volume  = {2},
+  pages   = {8},
+  year    = {2026}
+}
+
+% NOTE: Survey covering ray tracing and 3GPP models as radio map sources.
+%  A convenient single citation for "ray-traced maps are widely used as
+%  ground truth" in the introduction.
+@article{feng2025radiomapsurvey,
+  author  = {Feng, Bo and Zheng, Mingyu and Liang, Wei and Zhang, Lin},
+  title   = {A Recent Survey on Radio Map Estimation Methods for Wireless Networks},
+  journal = {Electronics},
+  volume  = {14},
+  number  = {8},
+  pages   = {1564},
+  year    = {2025}
+}
+
+% ---------------------------------------------------------------------------
+% Materials
+% ---------------------------------------------------------------------------
+
+% NOTE: Sionna RT 2.0.1 implements Section 2.1.4 and Table 3 of this
+%  recommendation, and cites revision 3 BY NAME in
+%  ``radio_materials/itu_material.py``, so cite revision 3 and not the
+%  current P.2040-4 (2025-09). Section V.
+@techreport{iturp2040,
+  author      = {{ITU-R}},
+  title       = {Effects of building materials and structures on radiowave
+                 propagation above about {100 MHz}},
+  institution = {International Telecommunication Union},
+  type        = {Recommendation},
+  number      = {ITU-R P.2040-3},
+  year        = {2023}
+}
+
+% ---------------------------------------------------------------------------
+% Radio maps as a prediction target, and across frequency
+% ---------------------------------------------------------------------------
+
+% NOTE: The benchmark the radio map reconstruction literature trains on.
+%  Worth citing in the introduction because its 56,080 maps were generated
+%  with Altair WinProp IRT capped at TWO interactions and the paper
+%  reports no ray count, which is exactly the point you are making: solver
+%  settings are chosen for tractability and then not reported or
+%  validated.
+@article{yapar2024challenge,
+  author  = {Yapar, {\c{C}}a{\u{g}}kan and Jaensch, Fabian and Levie, Ron
+             and Kutyniok, Gitta and Caire, Giuseppe},
+  title   = {Overview of the First Pathloss Radio Map Prediction Challenge},
+  journal = {IEEE Open Journal of Signal Processing},
+  volume  = {5},
+  pages   = {948--963},
+  year    = {2024},
+  doi     = {10.1109/OJSP.2024.3419563}
+}
+
+% NOTE: Peer reviewed, and spans your bands. Cite as prior work that
+%  treats frequency as an input to a learned path loss model.
+@article{nguyen2021multifreq,
+  author  = {Nguyen, Chi and Cheema, Adnan Ahmad},
+  title   = {A Deep Neural Network-Based Multi-Frequency Path Loss Prediction
+             Model from 0.8 {GHz} to 70 {GHz}},
+  journal = {Sensors},
+  volume  = {21},
+  number  = {15},
+  pages   = {5100},
+  year    = {2021},
+  doi     = {10.3390/s21155100}
+}
+
+% NOTE: PREPRINT, single author, not peer reviewed: cite it as a preprint
+%  or not at all, and do not lean on its numbers. It is relevant because
+%  its central assumption is that a free-space and knife-edge prior
+%  absorbs most of the frequency dependence, so the learned residual
+%  transfers across bands. Your per-cell result says the deep NLOS cells
+%  scale near 3.0 rather than 2.0, which is the case that assumption
+%  handles worst. That is the sharpest thing Section IV can say about why
+%  this measurement matters.
+@article{hussain2026zeroshot,
+  author  = {Hussain, Sajjad},
+  title   = {Zero-Shot Frequency Generalization for Radio Map Prediction via
+             Cross-Attention Physics-Residual Learning},
+  journal = {arXiv preprint arXiv:2608.16194},
+  year    = {2026}
+}
