@@ -19,3 +19,11 @@ results/*.md
 logs/
 results/*.npy
 results/*.log
+data/**/*.json
+
+# LaTeX build artefacts
+paper/*.log
+paper/*.aux
+paper/*.out
+paper/*.pdf
+paper/figures/
