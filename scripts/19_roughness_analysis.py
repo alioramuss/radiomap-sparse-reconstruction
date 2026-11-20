@@ -44,6 +44,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache-dir", default="data/roughness")
     ap.add_argument("--out", default="results/roughness_summary.json")
+    ap.add_argument("--model", choices=("umi", "uma"), default="umi",
+                    help="38.901 reference model. The transmitter is a 32 m "
+                         "rooftop site, so UMa (25 m nominal) is the closer "
+                         "match than UMi (10 m).")
     args = ap.parse_args()
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
 
@@ -79,7 +83,7 @@ def main() -> None:
 
     rows = []
     for f in BANDS:
-        pl_umi = g.path_loss("umi", los, d2d, d3d, f, float(tx[2]), H_UT)
+        pl_umi = g.path_loss(args.model, los, d2d, d3d, f, float(tx[2]), H_UT)
         for h in ROUGH:
             pl = -med[(f, h)]
             r = dict(band_ghz=f, roughness_mm=h, S=S[f"{f:g}"][f"{h:g}"])
@@ -90,7 +94,7 @@ def main() -> None:
                 r[f"{z}_gain_change_median_db"] = float(np.median(med[(f, h)][ok] - med[(f, 0.0)][ok]))
                 r[f"{z}_umi_bias_mean_db"] = float(np.mean(res))
                 r[f"{z}_umi_bias_median_db"] = float(np.median(res))
-                sig = g.SIGMA_SF[("umi", "los" if z == "los" else "nlos")]
+                sig = g.SIGMA_SF[(args.model, "los" if z == "los" else "nlos")]
                 r[f"{z}_within_1sigma"] = float(np.mean(np.abs(res) <= sig))
                 # reliability of the estimator at this configuration
                 a, b = runs[(f, h)][0][ok], runs[(f, h)][1][ok]

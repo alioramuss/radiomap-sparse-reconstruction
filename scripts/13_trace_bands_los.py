@@ -53,12 +53,17 @@ def los_mask(mi_scene, centres: np.ndarray, tx: np.ndarray) -> np.ndarray:
     return (~blocked).reshape(centres.shape[:2])
 
 
-def trace_band(freq_ghz: float, n_rays: int, seed: int, max_depth: int = 3):
+def trace_band(freq_ghz: float, n_rays: int, seed: int, max_depth: int = 3,
+               tx_z: float | None = None):
     from sionna.rt import PlanarArray, RadioMapSolver, Transmitter, load_scene
     import sionna.rt as rt
     from radiomap.scene import building_mask_from_scene
 
-    cfg = SceneConfig(frequency_hz=freq_ghz * 1e9, samples_per_tx=n_rays, seed=seed,
+    tx_pos = SceneConfig().tx_position
+    if tx_z is not None:
+        tx_pos = (tx_pos[0], tx_pos[1], float(tx_z))
+    cfg = SceneConfig(tx_position=tx_pos,
+                      frequency_hz=freq_ghz * 1e9, samples_per_tx=n_rays, seed=seed,
                       max_depth=max_depth)
     scene = load_scene(getattr(rt.scene, cfg.scene_name))
     scene.frequency = cfg.frequency_hz
@@ -96,6 +101,9 @@ def main() -> None:
     ap.add_argument("--max-depth", type=int, default=3,
                     help="3 is the interim setup; 5 is the truncation check")
     ap.add_argument("--bands", default="3.5,28,39")
+    ap.add_argument("--tx-z", type=float, default=None,
+                    help="transmitter height in metres; 38.901 UMi is "
+                         "specified for hBS = 10 m (Table 7.4.1-1)")
     args = ap.parse_args()
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
 
@@ -103,7 +111,7 @@ def main() -> None:
     ref_centres = ref_building = ref_los = None
     bands = tuple(float(b) for b in args.bands.split(","))
     for f in bands:
-        gain, centres, building, los, secs = trace_band(f, int(args.rays), args.seed, args.max_depth)
+        gain, centres, building, los, secs = trace_band(f, int(args.rays), args.seed, args.max_depth, args.tx_z)
         print(f"{f:>5g} GHz  solve {secs:5.1f} s  finite cells {np.isfinite(gain).sum()}")
         if ref_centres is None:
             ref_centres, ref_building, ref_los = centres, building, los
@@ -117,6 +125,9 @@ def main() -> None:
         out[f"solve_s_{f:g}"] = secs
 
     cfg = SceneConfig()
+    if args.tx_z is not None:
+        cfg = SceneConfig(tx_position=(cfg.tx_position[0], cfg.tx_position[1],
+                                       float(args.tx_z)))
     np.savez_compressed(
         args.out,
         centres=ref_centres,
