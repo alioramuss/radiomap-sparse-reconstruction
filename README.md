@@ -1,13 +1,39 @@
-# Sparse radio map reconstruction on a Sionna RT street canyon
+# Frequency scaling and sparse reconstruction on a Sionna RT street canyon
 
-Classical interpolation baselines on a ray-traced radio map, scored two ways:
-filling scattered gaps, and predicting into a block of street that was never
-measured. **The two answers differ by a factor of five.**
+Two pieces of work on the same ray-traced urban street canyon, suggested by
+Tianrun Qi (Southeast University, visiting IDCoM at the University of
+Edinburgh) and hosted by Prof John Thompson.
 
-Interim results for the first of two tasks suggested by Tianrun Qi (Southeast
-University, visiting IDCoM at the University of Edinburgh), hosted by
-Prof John Thompson. The write-up is in `report/`; the findings are summarised
-below.
+## The paper
+
+**`paper/` holds a complete eight-page draft: *Frequency Scaling of
+Non-Line-of-Sight Path Loss in a Ray-Traced Urban Street Canyon*.**
+
+It asks one question. At a fixed receiver location in deep shadow, how does
+path loss change as the carrier moves from sub-6 to millimetre wave, and does
+a ray tracer change it the same way a standardised model says it should? The
+same geometry is traced at 3.5, 28 and 39 GHz, so a frequency slope can be
+fitted per cell rather than inferred from aggregate path loss exponents.
+
+Beyond 80 m, 81% of non-line-of-sight cells have slopes between 2.9 and 3.1,
+against a reference value of 2.00. A slope of 3.0 is the signature of power
+arriving over a single diffracting edge. Comparing slopes cell by cell at two
+interaction depths leaves the far-zone median unchanged, so it follows from
+which propagation mechanisms are enabled rather than how far paths are traced.
+Giving every surface a scattering coefficient derived from its roughness
+carries those slopes back down through the reference value.
+
+The paper's reference model is **UMa, not UMi**. The transmitter is a rooftop
+site at 32 m standing on a 21.8 m building; 38.901 specifies UMi at a 10 m
+base station and UMa at 25 m. See `paper/README.md`. Where the sections below
+differ from the paper, the paper is current.
+
+## The reconstruction study
+
+Classical interpolation baselines on the same map, scored two ways: filling
+scattered gaps, and predicting into a block of street that was never measured.
+**The two answers differ by a factor of five.** The interim write-up is in
+`report/`.
 
 ---
 
@@ -36,13 +62,15 @@ because the variance in a cell is set by how many ray tubes land in it and that
 is geometry. The map itself does get harder edged, from 17.6 dB of spread to
 21.8 dB, which is a prediction about reconstruction rather than about cost.
 
-**5. Against 3GPP 38.901 UMi, line of sight agrees and non line of sight splits
-in two.** LOS cells sit on free space in all three bands and follow 20log₁₀(*f*)
-exactly, as the model assumes. NLOS cells do not follow the model's 21.3log₁₀(*f*).
-Most of them follow 30log₁₀(*f*), which is what a single diffracting edge gives,
-so the ray-traced NLOS street loses about 9 dB more than UMi predicts going from
-3.5 to 39 GHz. Tracing to depth 5 instead of 3 closes less than 1 dB of the gap,
-so it is not a truncation artefact.
+**5. Against 3GPP 38.901, line of sight agrees and non line of sight splits in
+two.** Against UMa, the model this geometry calls for, LOS agrees to within
+0.3 dB in every band with 99% interval coverage. NLOS does not. Most NLOS cells
+follow 30log₁₀(*f*), which is what a single diffracting edge gives, against the
+macrocell reference of 20log₁₀(*f*), so a far-zone cell loses about 10.5 dB more
+than the model predicts going from 3.5 to 39 GHz. Comparing slopes cell by cell
+at depth 3 and depth 5 gives a median paired change of zero, so it is not a
+truncation artefact. This is the paper's result; the sections below were written
+against UMi and are superseded by `paper/`.
 
 ---
 
@@ -152,14 +180,16 @@ space is 2.0. The UMi NLOS formula is 2.13.
 | LOS | 2.03 | 2.00 to 2.07 | 2.03 | 2.00 |
 | NLOS | 2.99 | 1.76 to 3.00 | 2.99 | 3.00 |
 
-57% of NLOS cells sit within 0.1 of 3.0, and the share climbs with distance:
-20% within 40 m, 50% at 40 to 80 m, 81% beyond 80 m. A single diffracting edge
-adds 10 dB per decade on top of free space, because the UTD diffraction
+57.5% of NLOS cells sit within 0.1 of 3.0, and the share climbs with distance:
+19.8% within 40 m, 50.2% at 40 to 80 m, 81.0% beyond 80 m. A single diffracting
+edge adds 10 dB per decade on top of free space, because the UTD diffraction
 coefficient falls as 1/√*k*, so 3.0 is the signature of cells whose power comes
-from one edge. About 20% of NLOS cells scale at 2.1 or below, which is the
-reflection-lit set. Their small departures from 2.0 are presumably the ITU
-material parameters changing with frequency. Integrated over 3.5 to 39 GHz, the diffraction-dominated cells lose
-about 9 dB more than the model's 2.13 would predict.
+from one edge. The rest divide as 22.9% between 2.1 and 2.9, 6.4% within 0.1 of
+free space and 13.2% below 1.9; no cell exceeds 3.1. The 19.6% at 2.1 or below
+are the reflection-lit set, and their small departures from 2.0 are consistent
+with the ITU material parameters changing with frequency. Integrated over 3.5 to
+39 GHz, a cell scaling at 3.0 rather than UMa's 2.00 loses 10.5 dB more; against
+UMi's 2.13 the figure is 9.1 dB.
 
 **Is it max depth?** Tracing at depth 5 instead of 3, same rays and seed
 (`scripts/17_depth_check.py`):
@@ -170,9 +200,15 @@ about 9 dB more than the model's 2.13 would predict.
 | 28 GHz | +11.08 | +10.26 | +18.56 | +17.40 | 0.00 / 2.57 dB |
 
 No cell is reached at depth 5 that was not reached at depth 3, and the median
-cell gains nothing. The gap is not a truncation artefact. With specular
-reflection and one diffraction per path, nothing else can carry energy into the
-deep shadow, and diffraction gets weaker as frequency rises.
+cell gains nothing. Two band-specific biases do not test a slope, though, so the
+paper redoes this as a paired per-cell comparison at all three bands: the median
+paired change in slope is zero to four decimal places, 88.9% of NLOS cells do not
+move at all, and the far-zone median goes from 2.994 to 2.992. The 11.1% that do
+move all move downward and sit in the middle zone, enough to pull the all-NLOS
+median from 2.99 to 2.76 while leaving the far zone untouched. The far-zone gap
+is not a truncation artefact. With specular reflection and one diffraction per
+path, nothing else can carry energy into the deep shadow, and diffraction gets
+weaker as frequency rises.
 
 **Why this links to diffuse scattering.** A measured channel has other
 mechanisms filling that shadow, and diffuse scattering is the obvious candidate
@@ -191,12 +227,20 @@ within 0.13 dB and leaves the reflection-lit cells 11 dB out. So a
 cross-frequency predictor mostly has to know which regime each cell is in, and
 that is a fact about geometry.
 
-**Caveats.** UMi is fitted for a 10 m base station and this transmitter sits on
-a 32 m rooftop. Run against UMa (25 m nominal) instead, LOS agrees to within
-0.3 dB in every band, and NLOS gets worse, with a bias of +9.4 to +15.6 dB. One
-scene, one transmitter, no diffuse scattering, and 38.901 is an average over
-many measured environments, so no single scene should be expected to sit on it.
+**The reference model.** The table above is against UMi, which is what this
+section originally used. UMi is specified for a 10 m base station and this
+transmitter is a 32 m rooftop site, so the paper takes UMa (25 m nominal) as
+the primary reference instead. Against UMa, LOS agrees to within 0.3 dB in
+every band with 99% interval coverage, and the NLOS bias grows to +9.4 to
++15.6 dB. UMa's NLOS frequency term is 20log₁₀(*f*), so its reference slope is
+exactly 2.00 rather than UMi's 2.13. A matched-height UMi run is not possible
+in this scene: at 10 m the transmitter is inside the building it stands on, and
+reaches 988 of 22,814 cells with no line of sight at all.
 `results/umi_comparison.csv` has both models in full.
+
+**Other caveats.** One scene, one transmitter, no diffuse scattering, and
+38.901 is an average over many measured environments, so no single scene should
+be expected to sit on it.
 
 ### Roughness-driven diffuse scattering against UMi
 
@@ -209,6 +253,11 @@ cells (`scripts/18_roughness_sweep.py`, `19_roughness_analysis.py`,
 `20_roughness_figure.py`; 10 known-answer checks, all pass, including that the
 scattering-off column reproduces the table above to 0.01 dB).
 
+Numbers below are against UMi. The paper reports the same sweep against UMa
+(`scripts/19_roughness_analysis.py --model uma`), where the bias is larger and
+interval coverage lower, since UMa's NLOS shadow fading is 6.0 dB against UMi's
+7.82.
+
 | Roughness | S at 3.5 / 28 / 39 GHz | NLOS mean bias vs UMi, 3.5 / 28 / 39 GHz | NLOS within UMi ±1σ, 28 / 39 GHz | NLOS frequency coefficient, median |
 |---|---|---|---|---|
 | off | 0 / 0 / 0 | +7.0 / +11.1 / +11.8 dB | 17% / 17% | 2.99 |
@@ -218,11 +267,17 @@ scattering-off column reproduces the table above to 0.01 dB).
 | 2.0 mm | 0.29 / 1.00 / 1.00 | +5.2 / +2.1 / +2.1 dB | 67% / 66% | 1.85 |
 
 At 3.5 GHz the implied S stays below 0.3 and the median far NLOS cell moves by
-less than 0.1 dB. At 28 and 39 GHz, from 0.5 mm up, diffuse paths add 6 to 11 dB to the
-median far NLOS cell, and the share of NLOS cells inside UMi's own one-sigma band
-approaches the 68% the model implies. The NLOS frequency coefficient falls from
-the single-edge 3.0 to 2.27 at 0.2 mm, close to UMi's 2.13, and overshoots below
-free space from 0.5 mm because S itself rises with frequency.
+less than 0.1 dB. At 28 and 39 GHz, from 0.5 mm up, diffuse paths add 6 to 11 dB
+to the median far NLOS cell.
+
+The frequency coefficient has to be read on the far-zone cells, which is what
+the diffraction argument is about. Taken over all NLOS cells it falls from 2.99
+to 2.27 at 0.2 mm; taken over the far zone it has barely moved at 0.2 mm, to
+2.70, and only reaches 2.01 at 0.5 mm. Those scattering-on values are **upper
+bounds**: unlike the scattering-off slope, which is identical at 2e7 and 1e8
+rays, they are still falling by about 0.6 per five-fold increase in budget. So
+the sweep establishes the direction and scale of the effect, not the roughness
+at which the slope crosses the reference.
 
 **Caveats.** The far-zone magnitudes are not converged: with scattering on at
 28 and 39 GHz two runs differ there by a median 3.4 to 3.9 dB, and the median far
@@ -375,6 +430,13 @@ python scripts/18_roughness_sweep.py         # 60 traces, cached in data/roughne
 python scripts/19_roughness_analysis.py      # tables + 10 checks, all pass
 python scripts/20_roughness_figure.py        # figures/fig_roughness.png
 
+# the same sweep against UMa, which is what the paper reports
+python scripts/19_roughness_analysis.py --model uma \
+       --out results/roughness_summary_uma.json
+python scripts/20_roughness_figure.py --model uma \
+       --summary results/roughness_summary_uma.json \
+       --out paper/figures/fig_roughness_uma_ieee.png --ieee
+
 # 5. dB vs linear ablation                    (no Sionna, minutes)
 python scripts/04_db_vs_linear.py --map data/map_3p5GHz.npz
 ```
@@ -514,6 +576,10 @@ scripts/
   15_umi_figure.py             the four-panel comparison figure
   16_umi_checks.py             15 known-answer checks on the formulas and data
   17_depth_check.py            depth 3 against depth 5
+  18_roughness_sweep.py        60 traces across roughness and band   (Sionna)
+  19_roughness_analysis.py     robust tables, --model umi|uma
+  20_roughness_figure.py       the four-panel scattering figure
+paper/              the IEEE draft, its bibliography and its own README
 notebooks/          self-contained Colab notebook
 report/             the interim write-up sent to IDCoM, 13 September 2026
 tests_pipeline.py   19 known-answer checks
